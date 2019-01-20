@@ -1,0 +1,11 @@
+{
+    "namespace": {
+        "name": "ywc"
+    },
+    "service": {
+		"name": "webservice"
+	},
+	"deployment": {
+		"name": "webservice"
+	}
+}

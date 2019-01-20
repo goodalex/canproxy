@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: ywc
+  name: loadgenerator
+  labels:
+    app: benchmark
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: benchmark
+  template:
+    metadata:
+      labels:
+        app: benchmark
+    spec:
+      containers:
+      - name: benchmark
+        image: eu.gcr.io/canary-proxy-inject/vegeta:12.2.2
+        resources:
+          limits:
+            cpu: 2
+            memory: "2G"            
+          requests:
+            cpu: 2
+            memory: "2G"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 7878

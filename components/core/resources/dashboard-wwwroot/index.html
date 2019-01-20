@@ -1,0 +1,607 @@
+<!--
+
+    quick dev overview - for dev purpose only
+
+
+-->
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>YWC Components - Dev Overview</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src='http://code.jquery.com/jquery-2.0.0.js'></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+    <script src="runsApi.js"></script>
+
+
+    <style type='text/css'>
+
+        .action-wrapper a {
+            color: blue;
+        }
+
+        body {
+            box-sizing: border-box;
+        }
+
+        pre {
+            background-color: ghostwhite;
+            border: 1px solid silver;
+            padding: 10px 20px;
+         /* margin: 20px; */
+            font-size: 12px;
+        }
+
+        code {
+
+        }
+
+        .json-key {
+            color: brown;
+        }
+        .json-value {
+            color: navy;
+        }
+        .json-string {
+            color: olive;
+        }
+
+
+        .box {
+            padding: 5px;
+        }
+
+        .meta-elem {
+            padding-top: 5px;
+            padding-bottom: 5px;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        .meta-elem.url {
+            font-size: 12px;
+            color: #999999;
+        }
+
+        .meta-elem.content {
+            font-size: 26px;
+        }
+
+        .meta-elem.component {
+            padding: 5px 15px;
+            border-radius: 12px;
+            background-color: gray;
+            font-size: 16px;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .percentile-key {
+            font-size: 10px;
+            /* font-weight: bold; */
+        }
+
+        .percentile-value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+
+    <script type='text/javascript'>//<![CDATA[
+
+            var state = {
+
+                reportOptions_report_query: "&bucket_grouping_by_time_period_seconds=60,30,20,10&skip_seconds=30"
+
+            };
+
+            function updateStateFromField(fieldId) {
+                var val = $('#'+fieldId).val();
+
+                if (val == '') val = null;
+
+                state[fieldId] = val;
+                console.log('updateStateFromField done ' + fieldId + 'set to ' + val );
+            }
+
+            function stateToValue(value) {
+                if (value == null) {
+                    return "";
+                } else {
+                    return value;
+                }
+            }
+
+    $(window).load(function(){
+        if (!library)
+            var library = {};
+
+        /*
+            pretty print code example from https://stackoverflow.com/questions/20389452/trigger-chromes-jsonview-extension-after-writing-content-to-an-iframe
+        */
+        library.json = {
+            replacer: function(match, pIndent, pKey, pVal, pEnd) {
+                var key = '<span class=json-key>';
+                var val = '<span class=json-value>';
+                var str = '<span class=json-string>';
+                var r = pIndent || '';
+                if (pKey)
+                    r = r + key + pKey.replace(/[": ]/g, '') + '</span>: ';
+                if (pVal)
+                    r = r + (pVal[0] == '"' ? str : val) + pVal + '</span>';
+                return r + (pEnd || '');
+                },
+            prettyPrint: function(obj) {
+                var jsonLine = /^( *)("[\w]+": )?("[^"]*"|[\w.+-]*)?([,[{])?$/mg;
+                return JSON.stringify(obj, null, 3)
+                    .replace(/&/g, '&amp;').replace(/\\"/g, '&quot;')
+                    .replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                    .replace(jsonLine, library.json.replacer);
+                }
+            };
+
+        var componentCssColorMap = {
+            core: "#476b6b",
+            balancer: "#3266cd"
+        };
+
+
+        function generateInfoBox(item, customAppender) {
+            item = convertToMap( item );
+
+            var box = $( '<div class="box">' );
+
+
+            box.append(
+                    $('<div class="meta">')
+                        .append( $('<span class="meta-elem component" style="background-color:'+componentCssColorMap[item.component]+';">').text( item.component ) )
+                        .append( $('<span class="meta-elem content">').text( item.content ) ).append( '<br>' )
+                        .append( $('<span class="meta-elem url">').text( item.url ) )
+                        );
+
+
+
+            $.ajax({
+                url: item.url,
+                context: document.body
+            }).done(function(data) {
+
+                if ( customAppender ) {
+                    customAppender( data, box );
+                } else {
+                    defaultAppender( data, box );
+                }
+
+            });
+
+
+            return box;
+        }
+
+        function defaultAppender(data, box) {
+            var content = $( '<code>' );
+
+            var parsed = null;
+
+                try {
+                    parsed = library.json.prettyPrint( data )
+                } catch (error) {
+                    console.error(error);
+                }
+
+            if ( parsed ) {
+                $( content ).html( parsed );
+            } else {
+                $( content ).text( data );
+            }
+
+            box.append( $( '<pre>' ).append( content ) );
+        }
+
+        function convertToMap(item) {
+            var map = {
+                url: item[0],
+                component: item[1],
+                content: item[2]
+            };
+            return map;
+        }
+
+/**
+["/api/v1/runs/last/balancer", "balancer"]
+
+        sources.forEach( function(item) {
+
+
+            var boxWrapper = $( '<div class="col-md-6">' );
+            var box = generateInfoBox( item );
+            boxWrapper.append( box );
+            $( '#boxes' ).append( boxWrapper );
+        });
+**/
+
+
+
+
+        $( function() {
+
+
+
+
+            var selectedRun = null;
+
+            $( "#core-tabs #runs"   ).append( generateInfoBox( ["api/v1/runs", "core", "runs"], function( data, box ) {
+
+                var table = $('<table id="runstable">');
+
+                data.forEach(function(item) {
+
+                    var openRun = $('<a>', { href: '#' }).text( item.id_short + ", status: " + item.status + ", created: " + item.created_formatted + " (" + item.id + ")" ).click( function() {
+                        selectRun( item );
+                    });
+                    var labelColumn = $( '<td>' ).append( openRun )
+
+                    var actionColumn = $( '<td>' );
+
+                    table.append( $( '<tr>' ).append( labelColumn ).append( actionColumn ) );
+
+                });
+
+                box.append( table );
+
+            } ));
+            $( "#core-tabs #status" ).append( generateInfoBox( ["api/v1/statuses/main", "core", "status"] ) );
+
+            $( "#core-tabs" ).tabs();
+
+            //runs
+
+            function selectRun(run) {
+                selectedRun = run;
+                //$('#run_tabs a[href="#run_overview"]').trigger('click');
+                reloadTabContent( getSelectedTabTarget() );
+
+                $('#run_selected_title').empty();
+                $('#run_selected_title').text( run.id );
+            }
+
+            function getSelectedTabTarget() {
+                return $("#run_tabs li.ui-tabs-active a").first().attr("href");
+            }
+
+            function reloadTabContent(targetTab) {
+                $( targetTab ).empty();
+
+                var contents = {
+                    "#run_overview": function(run) {
+
+                        var overview = $('<div>');
+
+                        var info = $('<div>');
+
+                        $.ajax({
+                            url: "api/v1/runs/"+run.id
+                        }).done(function(data) {
+
+                            info.append( "status: " +  data.status + ", created: " + data.created_formatted );
+
+                        });
+
+                        var actionBar = $('<div>');
+
+                        [
+                            ['/preparation/start', 'POST'],
+                            ['/interception/start', 'POST'],
+                            ['/interception/stop', 'POST'],
+                            ['/cleanup/start', 'POST']
+                            //['/', 'DELETE'] -- not implemented
+                        ].forEach(function(run_action) {
+
+                            actionBar.append( createApiActionElem( run_action, function() {
+
+                                var uri = run_action[0];
+                                var method = run_action[1];
+
+                                if (method == 'POST') {
+                                    return runsApi.post( run.id, uri );
+                                } else if (method == 'DELETE') {
+                                   //TODO
+                                }
+
+
+                            } ) );
+
+                        });
+
+                        overview.append( info );
+                        overview.append( actionBar );
+
+                        return overview;
+                    },
+                    "#run_balancer": function() {
+                        return generateInfoBox( ["api/v1/runs/"+selectedRun.id+"/balancer", "balancer"] );
+                    },
+                    "#run_report": function() {
+
+                        var wrapper = $('<div>');
+                        var options = '<h4>Options</h4><br><div>report_query: <input class="form-control input-sm" id="reportOptions_report_query" type="text" value="'+stateToValue(state.reportOptions_report_query)+'"><button onclick="updateStateFromField(\'reportOptions_report_query\')">update</button></div>';
+
+
+                        var reportsView = $("<div>");
+
+                        var exportField = $('<textarea style="width:600; height:400;">');
+
+                        var reportUrl = "api/v1/runs/"+selectedRun.id+"/report";
+
+                        if ( state.reportOptions_report_query != null) {
+                            reportUrl = reportUrl + "?" + state.reportOptions_report_query;
+                        }
+
+                        var infobox = generateInfoBox( [reportUrl, "report"], function( data, box ) {
+
+                            if ( data ) {//this gets added to another view, but the data is loaded here
+                                if ( data.reports ) {
+                                    data.reports.forEach( function(reportData) {
+                                        reportsView.append( createReportView( reportData ) );
+                                    });
+                                }
+                            }
+
+                            if ( data.export && data.export.csv ) {
+                                exportField.text( data.export.csv );
+                            }
+
+                            defaultAppender( data, box );
+
+                        });
+
+
+
+                        wrapper.append( options );
+                        wrapper.append( reportsView );
+                        wrapper.append( $('<div class="row">').append( exportField) );
+                        wrapper.append( infobox );
+
+
+                        return wrapper;
+
+
+                        function createReportView(report) {
+
+                            var summary = $('<div>');
+                            summary.append( "<br>&nbsp;<br><h4>Report Summary</h4> <br>"+ JSON.stringify( report.options ) +"<br>" );
+
+                            if ( report.buckets ) {
+
+                                var i = 0;
+
+                                try {
+                                    report.buckets.forEach(function(bucket) {
+                                        summary.append( '<div class="row"><div class="col-md-12"><span class=\"bucket-summary\">bucket ' + i + '</span></div></div>');
+
+
+
+                                        if (bucket.endpoint_types) {
+
+                                            var row = $('<div class="row">');
+
+                                            row.append( reportEndpointTypeInfo('baseline', bucket.endpoint_types ) );
+                                            row.append( reportEndpointTypeInfo('canary', bucket.endpoint_types ) );
+                                            row.append( reportEndpointTypeInfo('default', bucket.endpoint_types ) );
+
+                                            summary.append( row );
+
+                                        }
+
+                                        i++;
+                                    });
+
+                                } catch (error) {
+                                    console.error('error while rendering buckets data');
+                                    console.error(error);
+                                }
+
+
+
+                                function reportEndpointTypeInfo(type, source) {
+                                    var dataset = source[type];
+
+                                    var contentStr = null;
+
+                                    if (dataset && dataset.metrics) {
+
+                                        contentStr = "<br>&nbsp;<br>"+type+" percentiles:";
+
+                                        Object.keys( dataset.metrics ).forEach(function(metricKey) {
+                                            var value = dataset.metrics[metricKey];
+                                            contentStr = contentStr + " <br> <span class='percentile-key'>" + metricKey + "</span> "
+                                            + " <span class='percentile-value'>" + value + " ms</span> ";
+                                        });
+
+                                    } else {
+                                        contentStr = "no data on " + type;
+                                    }
+
+                                    return $('<div class="col-md-4">').append( contentStr );
+                                }
+
+                            }
+                            return summary;
+                        }
+
+
+                    },
+                    "#run_complete": function() {
+                        return generateInfoBox( ["api/v1/runs/"+selectedRun.id+"", "run complete"] );
+                    }
+                };
+
+                $( targetTab ).append( contents[targetTab](selectedRun) );
+            }
+
+            $( "#run_tabs, #fragment-runs" ).tabs({
+                activate: function(event, ui){
+
+                    var targetTab = getSelectedTabTarget();
+
+                    console.log( targetTab );
+
+                    reloadTabContent( targetTab );
+                   // $('#'+tabId)
+                }
+            });
+
+
+            function createApiActionElem(name, http) {
+
+
+                var actionWrapper = $('<span>', { class: "action-wrapper" });
+                var actionStatus = $('<span>');
+
+                actionStatus.text('[no status]');
+
+                var actionLink = $('<button>').text( name ).click( function() {
+
+                    actionStatus.text('[processing...]');
+
+                    http().done(function(response, statusText, xhr){
+                            // do something when response is ok
+                            actionStatus.text('[' + xhr.status +']');
+                        })
+                        .fail(function(jqXHR, textStatus, errorThrown) {
+                            console.error(jqXHR);
+                            actionStatus.text('[' + jqXHR.status +']');
+
+                        }
+                    );
+
+                });
+
+                actionWrapper.append( actionLink );
+                actionWrapper.append( ' ' );
+                actionWrapper.append( actionStatus );
+                actionWrapper.append( ' ' );
+
+                return actionWrapper;
+            }
+
+
+            var actionBar = $('#runs_actionbar');
+            actionBar.append( createApiActionElem("create run", function() {
+                    var input = $('#runs_create_payload').val();
+                    return runsApi.create( input );
+                } ) );
+            actionBar.append( createApiActionElem("delete all", function() {
+                return runsApi.deleteAll();
+            } ) );
+
+        } ); /* jquery ready end */
+
+
+
+    });
+
+
+    //]]>
+
+
+
+    </script>
+</head>
+<body>
+
+    <div class="container-fluid">
+
+        <div class="row">
+            <div class="col-md-12">
+                <h2>Core</h2>
+            </div>
+            <div class="col-md-12">
+
+                <div id="core-tabs">
+                    <ul>
+                      <li><a href="#runs">Runs</a></li>
+                      <li><a href="#status">Status</a></li>
+                      <li><a href="#runs_create">Create Run</a></li>
+                    </ul>
+                    <div id="runs"></div>
+                    <div id="status"></div>
+                    <div id="runs_create">
+
+<textarea id ="runs_create_payload" style="width:700px; height: 300px;">
+{
+    "namespace": {
+        "name": "webservice"
+    },
+    "service": {
+        "name": "webservice"
+    },
+    "deployment": {
+        "name": "webservice"
+    },
+    "canary_share": 0.1,
+    "canary_modification": {
+      "deployment": {
+        "_DISABLE_spec.template.spec.containers[0].image": "webservice:2.5.0",
+        "spec.template.spec.containers[0].env[0].value": "--port=8080 --message=canary --responseDelayAllRequests=10 --mode=canary"
+      }
+    },
+    "phase_options": {
+        "preparation": {
+            "autostart": true,
+            "autostart_delay_seconds": 0
+        },
+        "interception": {
+            "autostart": true,
+            "autostart_delay_seconds": 10,
+            "autostop": false,
+            "autostop_delay_seconds": 60
+        }
+    }
+}
+</textarea>
+                            <span id="runs_actionbar"></span>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <h2>Run Details</h2>
+            </div>
+            <div class="col-md-12">
+                <h3><div id="run_selected_title"></div></h3>
+            </div>
+            <div class="col-md-12">
+
+                <div id="run_tabs">
+                    <ul>
+                        <li><a href="#run_overview">Overview</a></li>
+                        <li><a href="#run_report">Report</a></li>
+                        <li><a href="#run_balancer">Balancer</a></li>
+                        <li><a href="#run_complete">Complete Data</a></li>
+                    </ul>
+                    <div id="fragment-runs">
+                        <div id="run_overview"></div>
+                        <div id="run_report"></div>
+                        <div id="run_balancer"></div>
+                        <div id="run_complete"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+
+
+    </div>
+
+
+</body>
+</html>

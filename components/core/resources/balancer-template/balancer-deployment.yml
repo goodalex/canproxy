@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: _DYNAMIC_
+  name: balancer
+  labels:
+    app: balancer
+    ywc.module: "true"
+    ywc.role: "balancer"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: balancer
+  template:
+    metadata:
+      labels:
+        app: balancer
+    spec:
+      serviceAccountName: ywc
+      nodeSelector:
+        ywc: balancer
+      tolerations:
+      - key: "ywc"
+        operator: "Equal"
+        value: "balancer"
+        effect: "NoSchedule"
+      containers:
+      - name: nginx
+        image: will-be-set-at-runtime
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: 0.5
+          requests:
+            cpu: 0.5
+        ports:
+        - containerPort: 8080
+          name: nginx
+        - containerPort: 8081
+          name: status
+        volumeMounts:
+        - mountPath: /ywc/runtime/provisioning
+          name: provisioning                 
+      - name: configloader
+        image: will-be-set-at-runtime
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: 0.4
+          requests:
+            cpu: 0.1
+        ports:
+        - containerPort: 8090
+          name: metrics
+        env:
+        - name: ARGS
+          value: "--port=8090 --k8s.endpointsLoading.reloadInterval=5000 --nginx.location=http://127.0.0.1:8081 --core.location=http://core.ywc:80" #--run.id=xxx will be appended by core
+        volumeMounts:
+        - mountPath: /provisioning
+          name: provisioning
+      terminationGracePeriodSeconds: 10           
+      volumes:
+      - name: provisioning
+        emptyDir: {}

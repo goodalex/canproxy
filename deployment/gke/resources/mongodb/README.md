@@ -1,0 +1,1 @@
+This mongodb example is based on https://github.com/pkdone/gke-mongodb-demo which is published under MIT License.

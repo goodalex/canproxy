@@ -1,0 +1,19 @@
+{
+  "name": "node-js-server",
+  "version": "0.0.1",
+  "description": "A dummy webserver",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.13.3",
+    "minimist-json": "^2.0.1",
+    "os": "^0.1.1",
+    "prom-client": "^11.0.0",
+    "response-time": "^2.3.2"
+  },
+  "engines": {
+    "node": "4.0.0"
+  }
+}

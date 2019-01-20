@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: ywc
+  name: core
+  labels:
+    app: core
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: core
+  template:
+    metadata:
+      labels:
+        app: core
+    spec:
+      serviceAccountName: ywc
+      containers:
+      - name: core
+        image: gcr.io/canary_perf/ywc-core:0.5.0
+        imagePullPolicy: Never #on minikube image is built directly to minikube docker
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 0.3
+            memory: "600M"
+          requests:
+            cpu: 0.25
+            memory: "400M"
+        env:
+        - name: ARGS
+          value: "--port=80 --mongodb.url=mongodb://madmin:pass@mongodb.ywc.svc.cluster.local:27017?authSource=admin&authMechanism=SCRAM-SHA-1 --balancer.images.configloader=gcr.io/canary_perf/ywc-balancer-configloader:0.4.0 --balancer.images.nginx=gcr.io/canary_perf/ywc-balancer-nginx:0.4.0"
+      terminationGracePeriodSeconds: 5
