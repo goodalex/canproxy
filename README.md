@@ -6,7 +6,7 @@ Tool for Canary Performance Assessment of microservices in Kubernetes.
 
 ### Overview
 
-<img src="https://gitlab.com/alxdev/thesis-dev/raw/master/docs/images/img_ywc_architecture_complete.png" width="700">
+<img src="https://github.com/goodalex/canproxy/blob/master/docs/images/img_ywc_architecture_complete.png?raw=true" width="700">
 
 ### Components
 
